@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #chat-container::-webkit-scrollbar, #history-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-container::-webkit-scrollbar-track, #history-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #chat-container::-webkit-scrollbar-thumb, #history-panel::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        #chat-container::-webkit-scrollbar-thumb:hover, #history-panel::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .prose {
+            max-width: 100%;
+        }
+        .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+            margin-top: 1.2em;
+            margin-bottom: 0.5em;
+        }
+        .prose p {
+            margin-bottom: 1em;
+        }
+        .prose ul, .prose ol {
+            margin-left: 1.5em;
+            margin-bottom: 1em;
+        }
+        .prose li {
+            margin-bottom: 0.5em;
+        }
+        #imageUpload {
+            display: none;
+        }
+        #history-panel {
+            transition: transform 0.3s ease-in-out;
+        }
+        #overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
+
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden"></div>
+
+    <aside id="history-panel" class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-30 transform -translate-x-full overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h2 class="text-lg font-bold">History</h2>
+            <button id="close-history-btn" class="text-gray-500 hover:text-gray-800">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <ul id="history-list" class="p-2 space-y-1">
+            <!-- History items will be populated here -->
+        </ul>
+    </aside>
+
+    <div class="flex flex-col flex-1 h-full">
+        <header class="bg-white shadow-md p-4 flex items-center justify-between z-10">
+            <div class="flex items-center">
+                 <button id="history-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
+                    <svg class="w-6 h-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+                <svg class="w-8 h-8 text-blue-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                </svg>
+                <h1 class="text-xl font-bold text-gray-800">Health Companion</h1>
+            </div>
+             <button id="new-chat-btn" class="p-2 rounded-full hover:bg-gray-100">
+                <svg class="w-6 h-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+            </button>
+        </header>
+
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-sm" role="alert">
+          <p class="font-bold">Disclaimer</p>
+          <p>This is an AI assistant for informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.</p>
+        </div>
+
+        <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+            <!-- Chat messages will be appended here -->
+        </main>
+
+        <footer class="bg-white border-t p-4">
+            <div class="max-w-3xl mx-auto">
+                <div id="imagePreviewContainer" class="hidden items-center space-x-2 mb-2 p-2 bg-gray-100 rounded-lg">
+                    <img id="imagePreview" src="" alt="Image preview" class="h-12 w-12 object-cover rounded-md">
+                    <p class="text-sm text-gray-600 flex-1 truncate" id="imageName"></p>
+                    <button id="removeImageButton" class="text-gray-500 hover:text-gray-800">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div class="flex items-center bg-gray-100 rounded-full p-2">
+                    <input type="file" id="imageUpload" accept="image/*">
+                    <label for="imageUpload" class="cursor-pointer text-gray-500 hover:text-blue-500 p-2 ml-1">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                    </label>
+                    <input type="text" id="userInput" placeholder="Ask about a health topic or your image..." class="flex-1 bg-transparent border-none focus:ring-0 px-4 text-gray-800 placeholder-gray-500">
+                    <button id="sendButton" class="bg-blue-500 text-white rounded-full p-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg>
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageName = document.getElementById('imageName');
+        const removeImageButton = document.getElementById('removeImageButton');
+        const historyBtn = document.getElementById('history-btn');
+        const closeHistoryBtn = document.getElementById('close-history-btn');
+        const historyPanel = document.getElementById('history-panel');
+        const historyList = document.getElementById('history-list');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const overlay = document.getElementById('overlay');
+
+        // State
+        let chatHistory = [];
+        let currentImageBase64 = null;
+        let allConversations = {};
+        let currentChatId = null;
+
+        const systemPrompt = `You are a helpful and compassionate AI Health Companion. Your purpose is to provide clear, easy-to-understand information about health topics, diseases, and potential remedies for educational purposes. If an image is provided, analyze it in the context of the user's health question. You can describe what you see, but do not diagnose. For example, if you see a lab report, you can summarize the data, but you cannot say what it means for the person's health. **CRITICAL RULES:** 1. **NEVER provide a medical diagnosis.** Do not interpret symptoms or images as a definitive condition. 2. **ALWAYS include a disclaimer.** At the end of every single response, you MUST include the following text: "Remember, this is not medical advice. Please consult a healthcare professional for any health concerns." 3. **Prioritize safety and clarity.** Use simple language. Avoid jargon. If a topic is sensitive or serious, strongly advise consulting a doctor. 4. **Be encouraging and supportive.** Maintain a positive and empathetic tone. 5. **Structure information well.** Use lists, bold text, and paragraphs to make the information digestible. 6. **Do not answer non-health related questions.** If the user asks something unrelated to health, medicine, fitness, or wellness, gently decline and steer the conversation back to health topics. For example: "As a Health Companion, my expertise is in health-related topics. I can't help with that, but I'd be happy to answer any health questions you have."`;
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', loadAllConversations);
+        sendButton.addEventListener('click', handleSend);
+        userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSend(); });
+        imageUpload.addEventListener('change', handleImageUpload);
+        removeImageButton.addEventListener('click', clearImagePreview);
+        historyBtn.addEventListener('click', toggleHistoryPanel);
+        closeHistoryBtn.addEventListener('click', toggleHistoryPanel);
+        overlay.addEventListener('click', toggleHistoryPanel);
+        newChatBtn.addEventListener('click', startNewChat);
+        historyList.addEventListener('click', handleHistoryClick);
+
+        // --- History Panel Logic ---
+        function toggleHistoryPanel() {
+            historyPanel.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function handleHistoryClick(e) {
+            const li = e.target.closest('li');
+            if (li && li.dataset.chatId) {
+                loadSpecificChat(li.dataset.chatId);
+                toggleHistoryPanel();
+            }
+        }
+
+        // --- Image Handling ---
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImageBase64 = e.target.result;
+                imagePreview.src = currentImageBase64;
+                imageName.textContent = file.name;
+                imagePreviewContainer.classList.remove('hidden');
+                imagePreviewContainer.classList.add('flex');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImagePreview() {
+            currentImageBase64 = null;
+            imageUpload.value = '';
+            imagePreviewContainer.classList.add('hidden');
+            imagePreviewContainer.classList.remove('flex');
+        }
+
+        // --- Chat & Data Logic ---
+        function saveConversations() {
+            if (!currentChatId || !allConversations[currentChatId]) return;
+            allConversations[currentChatId].history = chatHistory;
+             // Update title if it's the first user message
+            if (chatHistory.filter(m => m.role === 'user').length === 1) {
+                const userMessage = chatHistory.find(m => m.role === 'user').parts.find(p => p.text)?.text || 'Image query';
+                allConversations[currentChatId].title = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '');
+            }
+            localStorage.setItem('allHealthConversations', JSON.stringify(allConversations));
+            renderHistoryList();
+        }
+
+        function loadAllConversations() {
+            const savedConversations = localStorage.getItem('allHealthConversations');
+            allConversations = savedConversations ? JSON.parse(savedConversations) : {};
+            const chatIds = Object.keys(allConversations).sort((a,b) => b-a); // Sort by newest first
+            if (chatIds.length > 0) {
+                loadSpecificChat(chatIds[0]);
+            } else {
+                startNewChat();
+            }
+            renderHistoryList();
+        }
+        
+        function renderHistoryList() {
+            historyList.innerHTML = '';
+            const chatIds = Object.keys(allConversations).sort((a,b) => b-a);
+            chatIds.forEach(id => {
+                const conversation = allConversations[id];
+                const li = document.createElement('li');
+                li.dataset.chatId = id;
+                li.className = `p-2 rounded-md cursor-pointer hover:bg-gray-100 text-sm truncate ${id === currentChatId ? 'bg-blue-100 font-semibold' : ''}`;
+                li.textContent = conversation.title || 'New Chat';
+                historyList.appendChild(li);
+            });
+        }
+        
+        function loadSpecificChat(chatId) {
+            if (!allConversations[chatId]) return;
+            currentChatId = chatId;
+            chatHistory = allConversations[chatId].history;
+            chatContainer.innerHTML = '';
+            chatHistory.forEach(message => {
+                if (message.role === 'user') {
+                    const textPart = message.parts.find(p => p.text)?.text;
+                    const imagePart = message.parts.find(p => p.inlineData);
+                    const imageUrl = imagePart ? `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` : null;
+                    appendMessage('user', textPart, imageUrl);
+                } else if (message.role === 'model') {
+                    appendMessage('assistant', message.parts[0].text);
+                }
+            });
+            renderHistoryList();
+        }
+        
+        function startNewChat() {
+            chatHistory = [];
+            currentChatId = Date.now().toString();
+            allConversations[currentChatId] = { id: currentChatId, title: 'New Chat', history: [] };
+            chatContainer.innerHTML = '';
+            appendMessage('assistant', "Hello! I'm your Health Companion. How can I help you today? You can ask me about symptoms, remedies, or general health topics.");
+            saveConversations(); // Save the new empty chat
+            toggleHistoryPanel();
+        }
+
+        async function getAiResponse(userMessage, imageBase64) {
+            sendButton.disabled = true;
+            appendMessage('user', userMessage, imageBase64);
+            appendMessage('loading', '');
+
+            const userParts = [{ text: userMessage }];
+            if (imageBase64) {
+                userParts.push({ inlineData: { mimeType: imageBase64.split(';')[0].split(':')[1], data: imageBase64.split(',')[1] } });
+            }
+            
+            chatHistory.push({ role: "user", parts: userParts });
+            saveConversations();
+
+            const apiKey = "AIzaSyD8Woyft2ZEE_7OMMAC4qzY0DW7QBtd7Fc";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = { contents: chatHistory, systemInstruction: { parts: [{ text: systemPrompt }] }, tools: [{ "google_search": {} }] };
+
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                let aiText = "Sorry, I couldn't generate a response. Please try again.";
+                if (candidate?.content?.parts?.[0]?.text) {
+                    aiText = candidate.content.parts[0].text;
+                }
+                chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+                saveConversations();
+                removeLoadingIndicator();
+                appendMessage('assistant', aiText);
+            } catch (error) {
+                console.error("Error fetching AI response:", error);
+                removeLoadingIndicator();
+                appendMessage('error', 'There was an error connecting to the assistant. Please check your connection and try again.');
+            } finally {
+                sendButton.disabled = false;
+                userInput.focus();
+            }
+        }
+        
+        // --- UI Rendering ---
+        function formatMessage(text) {
+            let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/(^|\n)- (.*)/g, '$1<li>$2</li>');
+            html = html.replace(/<li>/g, '<ul><li>').replace(/(<\/li>)(?!<li>)/g, '$1</ul>').replace(/<\/ul><ul>/g, '');
+            html = html.replace(/\n/g, '<br>');
+            return `<div class="prose">${html}</div>`;
+        }
+
+        function appendMessage(sender, text, imageUrl = null) {
+            let messageDiv;
+            if (sender === 'user') {
+                const imageHtml = imageUrl ? `<img src="${imageUrl}" class="mt-2 rounded-lg max-w-xs max-h-48 object-contain">` : '';
+                messageDiv = `<div class="flex items-start gap-3 justify-end"><div class="bg-blue-500 text-white p-4 rounded-lg shadow-sm max-w-lg"><p>${text}</p>${imageHtml}</div><div class="flex-shrink-0 bg-gray-300 text-gray-700 rounded-full h-8 w-8 flex items-center justify-center font-bold">You</div></div>`;
+            } else if (sender === 'assistant') {
+                 messageDiv = `<div class="flex items-start gap-3"><div class="flex-shrink-0 bg-blue-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">AI</div><div class="bg-white p-4 rounded-lg shadow-sm max-w-lg">${formatMessage(text)}</div></div>`;
+            } else if (sender === 'loading') {
+                messageDiv = `<div id="loading-indicator" class="flex items-start gap-3"><div class="flex-shrink-0 bg-blue-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">AI</div><div class="bg-white p-4 rounded-lg shadow-sm"><div class="flex items-center space-x-2"><div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0s;"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div></div></div></div>`;
+            } else if (sender === 'error') {
+                 messageDiv = `<div class="flex items-start gap-3"><div class="flex-shrink-0 bg-red-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">!</div><div class="bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg shadow-sm max-w-lg"><p>${text}</p></div></div>`;
+            }
+            chatContainer.innerHTML += messageDiv;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function removeLoadingIndicator() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            if (loadingIndicator) loadingIndicator.remove();
+        }
+
+        function handleSend() {
+            const message = userInput.value.trim();
+            if (!message && !currentImageBase64) return;
+            getAiResponse(message, currentImageBase64);
+            userInput.value = '';
+            clearImagePreview();
+        }
+    </script>
+</body>
+</html>
+
